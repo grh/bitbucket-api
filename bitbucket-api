@@ -1,0 +1,130 @@
+#!/usr/bin/env ruby
+
+require 'json'
+
+v1baseurl = 'https://api.bitbucket.org/1.0'
+v2baseurl = 'https://api.bitbucket.org/2.0'
+
+def usage
+    puts 'bitbucket-api version 1.0.0
+        
+usage: bitbucket-api -u username [command] [options]
+        
+COMMANDS:
+  -u username
+  --create-project teamname projectkey [options]
+  --delete-project teamname projectkey
+  --update-project teamname projectkey [options]
+  --create-repository reponame [options]
+  --delete-repository reponame
+  --update-repository reponame [options]
+  --set-group-privileges teamname groupname=value
+  --set-user-privileges reponame acctname=value
+
+OPTIONS:
+  --options name=value,name=value,...
+
+      is_private=boolean
+      team=teamname
+      project=projectkey
+      project=projectname
+      fork_policy=policyname'
+end
+
+# parse command-line arguments
+if ARGV[0] != '-u'
+    usage
+    exit
+else
+    user, team, repo, group, privilege, acct, action, httpmethod = nil
+    opts = Hash.new
+
+    ARGV.each_with_index do |arg, i|
+        case arg
+            when '-u'
+                user = ARGV[i+1]
+            when '--create-project', '--delete-project', '--update-project'
+                team = ARGV[i+1]
+                project_key = ARGV[i+2]
+            when '--create-repository', '--delete-repository', '--update-repository'
+                repo = ARGV[i+1]
+            when '--set-group-privileges'
+                team = ARGV[i+1]
+                group, privilege = ARGV[i+2].split('=')
+            when '--set-user-privileges'
+                repo = ARGV[i+1]
+                acct, privilege = ARGV[i+2].split('=')
+            when '--options'
+                opts = Hash[*ARGV[i+1].split(/,|=/)]
+                
+                team = opts["team"] if opts["team"]
+
+                if opts["projectkey"]
+                    if opts["project"] 
+                        opts["project"]["key"] = opts["projectkey"]
+                    else
+                        opts["project"] = {"key" => opts["projectkey"]}
+                    end
+
+                    opts.delete("projectkey")
+                end
+
+                if opts["projectname"]
+                    if opts["project"] 
+                        opts["project"]["name"] = opts["projectname"]
+                    else
+                        opts["project"] = {"name" => opts["projectname"]}
+                    end
+
+                    opts.delete("projectname")
+                end
+        end
+    end
+
+    ARGV.each do |arg|
+        case arg
+            when '--create-project'
+                action = :createProject
+            when '--delete-project'
+                action = :deleteProject
+            when '--update-project'
+                action = :updateProject
+            when '--create-repository'
+                action = :createRepo
+                httpmethod = "POST"
+            when '--delete-repository'
+                action = :deleteRepo
+            when '--update-repository'
+                action = :updateRepo
+            when '--set-group-privileges'
+                action = :setGroupPrivileges
+            when '--set-user-privileges'
+                action = :setUserPrivileges
+        end
+    end
+
+    case action
+        when :createProject
+        when :deleteProject
+        when :updateProject
+        when :createRepo
+            opts["scm"] = "git"
+
+            if team
+              cmd = "curl -s -u #{user} -X #{httpmethod} -H \"Content-Type: application/json\" -d '#{opts.to_json}' #{v2baseurl}/repositories/#{team}/#{repo.downcase}" 
+            else
+              cmd = "curl -s -u #{user} -X #{httpmethod} -H \"Content-Type: application/json\" -d '#{opts.to_json}' #{v2baseurl}/repositories/#{user}/#{repo.downcase}" 
+            end
+        when :deleteRepo
+        when :updateRepo
+        when :setGroupPrivileges
+        when :setUserPrivileges
+        else
+            usage
+            exit
+    end
+
+    #puts cmd
+    response = JSON.parse(`#{cmd}`)
+    puts response["error"]["fields"]["name"] if response["type"] == "error"
+end

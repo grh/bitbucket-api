@@ -3,99 +3,157 @@ NAME
     bitbucket-api - command-line utility to interact with Bitbucket
 
 SYNOPSIS 
-    bitbucket-api -u username -r reponame [options] 
+    bitbucket-api -u username [command] [options] 
 
 DESCRIPTION
     bitbucket-api is a Bash command-line Ruby script which can be used to
     create, modify, and delete repositories hosted on bitbucket.org. It
     does so by parsing the options given and making an HTTP request to
-    the Bitbucket API. It requires curl to function properly.
+    the Bitbucket API. It requires ruby and curl to function properly.
 
-OPTIONS
+COMMANDS
     -u username     Bitbucket username
 
-    -r reponame     Bitbucket repository name
+    --create-project teamname projectkey [options]      Create a project
 
-    -c              create a repository
+            teamname and projectkey are the lowercase string identifiers
+            used by Bitbucket. For the options available, see --options.
 
-                    NOTE: the Bitbucket API follows REST API
-                    conventions. That is, it utilizes the HTTP
-                    request methods (GET, POST, PUT, DELETE) to
-                    determine the type of action to perform.
-                    Therefore, you cannot use the delete option in
-                    conjunction with the create option. Those
-                    options must be utilized in separate utility
-                    calls.
+            Currently, you can only create an empty project and then
+            create new repositories associated with that project. There
+            is no API facility yet to associate existing repositories to
+            a new project.
 
-    -d              delete a repository
+            NOTE: the Bitbucket API follows REST API conventions. That
+            is, it utilizes the HTTP request methods (GET, POST, PUT,
+            DELETE) to determine the type of action to perform.
+            Therefore, you cannot use the create option in conjunction
+            with the delete or update options. Those options must be
+            utilized in separate utility calls.
 
-                    NOTE: the Bitbucket API follows REST API
-                    conventions. That is, it utilizes the HTTP
-                    request methods (GET, POST, PUT, DELETE) to
-                    determine the type of action to perform.
-                    Therefore, you cannot use the delete option in
-                    conjunction with the create option. Those
-                    options must be utilized in separate utility
-                    calls.
+    --delete-project teamname projectkey        Delete a project
 
-    --group-privileges groupname=value
+            teamname and projectkey are the lowercase string identifiers
+            used by Bitbucket. For the options available, see --options.
 
-                    Set repository privileges for a team group.
+            NOTE: the Bitbucket API follows REST API conventions. That
+            is, it utilizes the HTTP request methods (GET, POST, PUT,
+            DELETE) to determine the type of action to perform.
+            Therefore, you cannot use the delete option in conjunction
+            with the create or update options. Those options must be
+            utilized in separate utility calls.
 
-                    groupname is the lowercase group string identifier
-                    used by Bitbucket, and the value is one of read,
-                    write, admin, or delete.
+    --update-project teamname projectkey [options]      Update a project
 
-    --options name=value,name=value,...
+            teamname and projectkey are the lowercase string identifiers
+            used by Bitbucket. For the options available, see --options.
 
-                    The options list is simple a comma-separated series
-                    of name=value pairs. Available options include:
+            Currently, there is no API facility to associate existing
+            repositories to an existing project.
 
-                    private=boolean     true or false
+            NOTE: the Bitbucket API follows REST API conventions. That
+            is, it utilizes the HTTP request methods (GET, POST, PUT,
+            DELETE) to determine the type of action to perform.
+            Therefore, you cannot use the update option in conjunction
+            with the create or delete options. Those options must be
+            utilized in separate utility calls.
 
-    --privileges username=value
+    --create-repository reponame [options]      Create a repository
 
-                    Set repository privileges for a single user.
+            reponame is the lowercase repository string identifier
+            used by Bitbucket (also known as the repo-slug). For the
+            options available, see --options.
 
-                    username is the lowercase string identifier used by
-                    Bitbucket, and the value is one of read, write,
-                    admin, or delete.
+            NOTE: the Bitbucket API follows REST API conventions. That
+            is, it utilizes the HTTP request methods (GET, POST, PUT,
+            DELETE) to determine the type of action to perform.
+            Therefore, you cannot use the create option in conjunction
+            with the delete or update options. Those options must be
+            utilized in separate utility calls.
 
-    --project projectkey 
+    --delete-repository reponame        Delete a repository
 
-                    Use this option to specify a particular project to
-                    which a repository belongs.
+            reponame is the lowercase repository string identifier
+            used by Bitbucket (also known as the repo-slug).
 
-    --team teamname     
+            NOTE: the Bitbucket API follows REST API conventions. That
+            is, it utilizes the HTTP request methods (GET, POST, PUT,
+            DELETE) to determine the type of action to perform.
+            Therefore, you cannot use the delete option in conjunction
+            with the create or update options. Those options must be
+            utilized in separate utility calls.
 
-                    Use this option to specify the team name to which a
-                    repository belongs.
+    --update-repository reponame [options]      Update a repository
+
+            reponame is the lowercase repository string identifier
+            used by Bitbucket (also known as the repo-slug). For the
+            options available, see --options.
+
+            NOTE: the Bitbucket API follows REST API conventions. That
+            is, it utilizes the HTTP request methods (GET, POST, PUT,
+            DELETE) to determine the type of action to perform.
+            Therefore, you cannot use the update option in conjunction
+            with the create or delete options. Those options must be
+            utilized in separate utility calls.
+
+    --set-group-privileges teamname groupname=value
+
+            Set repository privileges for a team group.
+
+            teamname and groupname are the lowercase string identifiers
+            used by Bitbucket. value is one of read, write, admin, or
+            delete.
+
+    --set-user-privileges reponame acctname=value
+
+            Set repository privileges for a single user.
+
+            reponame and acctname are the lowercase string identifiers
+            used by Bitbucket. value is one of read, write, admin, or
+            delete.
+
+OPTIONS
+    --options name=value,name=value,...         Set command options
+
+            The options list is a comma-separated series of name=value
+            pairs. Available options include:
+
+            is_private=boolean          true or false
+
+            team=teamname               lowercase team identifier
+
+            projectkey=projectkey       project display name
+
+            projectname=projectname     project key
+
+            fork_policy                 allow_forks, no_public_forks, 
+                                            or no_forks
 
 EXAMPLES
 
-    Create a private repository named myRepo for a team named team1:
+    Create a private repository named myRepo in project proj1 belonging
+    to team team1
 
-        bitbucket-api -u username -r myRepo --team team1 \
-            --options private=true
+        bitbucket-api -u username --create-repository myRepo \
+            --options is_private=true,team=team1,projectkey=proj1
 
     Delete the myRepo repository:
 
-        bitbucket-api -u username -r myRepo -d
+        bitbucket-api -u username --delete-repository myRepo
 
     Remove group1 privileges from myRepo for team1:
 
-        bitbucket-api -u username -r myRepo --team team1 \
-            --group-privileges group1:delete
+        bitbucket-api -u username --set-group-privileges team1 \
+            group1:delete
 
     Give user1 write privileges on myRepo:
 
-        bitbucket-api -u username -r myRepo --privileges user1:write
+        bitbucket-api -u username --set-repository-privileges myRepo \
+            user1:write
 
 TO DO
 
-    - Add additional API endpoints/parameters as --options
-
-    - Rewrite this in Python (?)
+    - Add additional API endpoints/parameters as command/options
 
 LICENSE
 
