@@ -150,14 +150,14 @@ EXAMPLES
 
     Give user1 write privileges on myRepo:
 
-        bitbucket-api -u username --set-repository-privileges myRepo \
+        bitbucket-api -u username --set-user-privileges myRepo \
             user1:write
 
 TO DO
 
-    - Add additional API endpoints/parameters as command/options
-    - Fix --create-project: --options is_private="true" gives expected
-      boolean error
+    - Add remaining API endpoints/parameters as command/options
+    - Fix --create-project: --options is_private="true" gives boolean error
+    - Fix json parser: in some cases gives parse error
 
 LICENSE
 

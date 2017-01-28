@@ -36,7 +36,7 @@ if ARGV[0] != '-u'
     usage
     exit
 else
-    user, team, projectkey, repo, group, privilege, acct, action, httpmethod = nil
+    user, team, projectkey, repo, group, privilege, acct, action, httpmethod, owner = nil
     opts = Hash.new
 
     ARGV.each_with_index do |arg, i|
@@ -114,7 +114,11 @@ else
             when '--set-user-privileges'
                 action = :setUserPrivileges
 
-                team = opts["team"] if opts["team"]
+                if opts["team"]
+                    owner = opts["team"]
+                else
+                    owner = user
+                end
 
                 case privilege
                     when 'delete'
@@ -134,36 +138,40 @@ else
             opts["scm"] = "git"
 
             if team
+              # create a repo for a team
               cmd = "curl -s -u #{user} -X #{httpmethod} -H \"Content-Type: application/json\" -d '#{opts.to_json}' #{v2baseurl}/repositories/#{team}/#{repo.downcase}" 
             else
+              # create a repo for a user
               cmd = "curl -s -u #{user} -X #{httpmethod} -H \"Content-Type: application/json\" -d '#{opts.to_json}' #{v2baseurl}/repositories/#{user}/#{repo.downcase}" 
             end
         when :deleteRepo
         when :updateRepo
         when :setGroupPrivileges
             if opts["reponame"]
+              # set group privileges for a single team repo
                 cmd = "curl -s -u #{user} -X #{httpmethod} #{v1baseurl}/group-privileges/#{team}/#{opts["reponame"]}/#{team}/#{group}" 
             else
+              # set group privileges for all repos belonging to a team
                 cmd = "curl -s -u #{user} -X #{httpmethod} #{v1baseurl}/group-privileges/#{team}/#{team}/#{group}" 
             end
         when :setUserPrivileges
             if repo and httpmethod == 'PUT'
-                cmd = "curl -s -u #{user} -X #{httpmethod} -d #{privilege} #{v1baseurl}/privileges/#{team}/#{repo}/#{acct}" 
+                # set user read, write, admin privileges on 
+                # single repo owned by owner
+                cmd = "curl -s -u #{user} -X #{httpmethod} -d #{privilege} #{v1baseurl}/privileges/#{owner}/#{repo}/#{acct}" 
             end
 
             if repo and httpmethod == 'DELETE'
-                cmd = "curl -s -u #{user} -X #{httpmethod} #{v1baseurl}/privileges/#{team}/#{repo}/#{acct}" 
-            end
-
-            if repo.nil? and httpmethod == 'DELETE'
-                cmd = "curl -s -u #{user} -X #{httpmethod} #{v1baseurl}/privileges/#{acct}/#{opts["reponame"]}" 
+                # delete user privileges on 
+                # single repo owned by owner
+                cmd = "curl -s -u #{user} -X #{httpmethod} #{v1baseurl}/privileges/#{owner}/#{repo}/#{acct}" 
             end
         else
             usage
             exit
     end
 
-    puts cmd
-    #response = JSON.parse(`#{cmd}`)
-    #puts response["error"]["fields"]["name"] if response["type"] == "error"
+    #puts cmd
+    response = `#{cmd}`
+    puts response
 end
