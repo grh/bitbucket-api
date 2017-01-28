@@ -36,7 +36,7 @@ if ARGV[0] != '-u'
     usage
     exit
 else
-    user, team, repo, group, privilege, acct, action, httpmethod = nil
+    user, team, projectkey, repo, group, privilege, acct, action, httpmethod = nil
     opts = Hash.new
 
     ARGV.each_with_index do |arg, i|
@@ -45,7 +45,7 @@ else
                 user = ARGV[i+1]
             when '--create-project', '--delete-project', '--update-project'
                 team = ARGV[i+1]
-                project_key = ARGV[i+2]
+                projectkey = ARGV[i+2]
             when '--create-repository', '--delete-repository', '--update-repository'
                 repo = ARGV[i+1]
             when '--set-group-privileges'
@@ -56,7 +56,27 @@ else
                 acct, privilege = ARGV[i+2].split('=')
             when '--options'
                 opts = Hash[*ARGV[i+1].split(/,|=/)]
-                
+        end
+    end
+
+    ARGV.each do |arg|
+        case arg
+            when '--create-project'
+                action = :createProject
+                httpmethod = 'PUT'
+
+                if opts["projectname"]
+                    opts["name"] = opts["projectname"]
+                    opts.delete("projectname")
+                end
+            when '--delete-project'
+                action = :deleteProject
+            when '--update-project'
+                action = :updateProject
+            when '--create-repository'
+                action = :createRepo
+                httpmethod = 'POST'
+
                 team = opts["team"] if opts["team"]
 
                 if opts["projectkey"]
@@ -78,33 +98,36 @@ else
 
                     opts.delete("projectname")
                 end
-        end
-    end
-
-    ARGV.each do |arg|
-        case arg
-            when '--create-project'
-                action = :createProject
-            when '--delete-project'
-                action = :deleteProject
-            when '--update-project'
-                action = :updateProject
-            when '--create-repository'
-                action = :createRepo
-                httpmethod = "POST"
             when '--delete-repository'
                 action = :deleteRepo
             when '--update-repository'
                 action = :updateRepo
             when '--set-group-privileges'
                 action = :setGroupPrivileges
+
+                case privilege
+                    when 'delete'
+                        httpmethod = 'DELETE'
+                    when 'read', 'write', 'admin'
+                        httpmethod = 'PUT'
+                end
             when '--set-user-privileges'
                 action = :setUserPrivileges
+
+                team = opts["team"] if opts["team"]
+
+                case privilege
+                    when 'delete'
+                        httpmethod = 'DELETE'
+                    when 'read', 'write', 'admin'
+                        httpmethod = 'PUT'
+                end
         end
     end
 
     case action
         when :createProject
+            cmd = "curl -s -u #{user} -X #{httpmethod} -H \"Content-Type: application/json\" -d '#{opts.to_json}' #{v2baseurl}/teams/#{team}/projects/#{projectkey}" 
         when :deleteProject
         when :updateProject
         when :createRepo
@@ -118,13 +141,29 @@ else
         when :deleteRepo
         when :updateRepo
         when :setGroupPrivileges
+            if opts["reponame"]
+                cmd = "curl -s -u #{user} -X #{httpmethod} #{v1baseurl}/group-privileges/#{team}/#{opts["reponame"]}/#{team}/#{group}" 
+            else
+                cmd = "curl -s -u #{user} -X #{httpmethod} #{v1baseurl}/group-privileges/#{team}/#{team}/#{group}" 
+            end
         when :setUserPrivileges
+            if repo and httpmethod == 'PUT'
+                cmd = "curl -s -u #{user} -X #{httpmethod} -d #{privilege} #{v1baseurl}/privileges/#{team}/#{repo}/#{acct}" 
+            end
+
+            if repo and httpmethod == 'DELETE'
+                cmd = "curl -s -u #{user} -X #{httpmethod} #{v1baseurl}/privileges/#{team}/#{repo}/#{acct}" 
+            end
+
+            if repo.nil? and httpmethod == 'DELETE'
+                cmd = "curl -s -u #{user} -X #{httpmethod} #{v1baseurl}/privileges/#{acct}/#{opts["reponame"]}" 
+            end
         else
             usage
             exit
     end
 
-    #puts cmd
-    response = JSON.parse(`#{cmd}`)
-    puts response["error"]["fields"]["name"] if response["type"] == "error"
+    puts cmd
+    #response = JSON.parse(`#{cmd}`)
+    #puts response["error"]["fields"]["name"] if response["type"] == "error"
 end

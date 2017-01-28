@@ -118,16 +118,18 @@ OPTIONS
             The options list is a comma-separated series of name=value
             pairs. Available options include:
 
-            is_private=boolean          true or false
-
-            team=teamname               lowercase team identifier
-
-            projectkey=projectkey       project display name
-
-            projectname=projectname     project key
-
-            fork_policy                 allow_forks, no_public_forks, 
+            fork_policy             allow_forks, no_public_forks, 
                                             or no_forks
+
+            is_private              true or false
+
+            projectkey              project key
+
+            projectname             project name
+
+            reponame                lowercase repository identifer
+
+            team                    lowercase team identifier
 
 EXAMPLES
 
@@ -154,6 +156,8 @@ EXAMPLES
 TO DO
 
     - Add additional API endpoints/parameters as command/options
+    - Fix --create-project: --options is_private="true" gives expected
+      boolean error
 
 LICENSE
 
