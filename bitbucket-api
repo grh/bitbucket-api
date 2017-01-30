@@ -149,10 +149,22 @@ else
         when :setGroupPrivileges
             if opts["reponame"]
               # set group privileges for a single team repo
-                cmd = "curl -s -u #{user} -X #{httpmethod} #{v1baseurl}/group-privileges/#{team}/#{opts["reponame"]}/#{team}/#{group}" 
+                if httpmethod =='PUT'
+                    cmd = "curl -s -u #{user} -X #{httpmethod} -d #{privilege} #{v1baseurl}/group-privileges/#{team}/#{opts["reponame"]}/#{team}/#{group}" 
+                end
+
+                if httpmethod == 'DELETE'
+                    cmd = "curl -s -u #{user} -X #{httpmethod} #{v1baseurl}/group-privileges/#{team}/#{opts["reponame"]}/#{team}/#{group}" 
+                end
             else
               # set group privileges for all repos belonging to a team
-                cmd = "curl -s -u #{user} -X #{httpmethod} #{v1baseurl}/group-privileges/#{team}/#{team}/#{group}" 
+                if httpmethod == 'PUT'
+                    cmd = "curl -s -u #{user} -X #{httpmethod} -d #{privilege} #{v1baseurl}/group-privileges/#{team}/#{team}/#{group}" 
+                end
+
+                if httpmethod == 'DELETE'
+                    cmd = "curl -s -u #{user} -X #{httpmethod} #{v1baseurl}/group-privileges/#{team}/#{team}/#{group}" 
+                end
             end
         when :setUserPrivileges
             if repo and httpmethod == 'PUT'
